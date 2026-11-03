@@ -4043,6 +4043,7 @@ export type components = {
             }[];
             isBot?: boolean;
             isCat?: boolean;
+            isGal?: boolean;
             requireSigninToViewContents?: boolean;
             makeNotesFollowersOnlyBefore?: number | null;
             makeNotesHiddenBefore?: number | null;
@@ -27905,6 +27906,7 @@ export interface operations {
                     makeNotesHiddenBefore?: number | null;
                     isBot?: boolean;
                     isCat?: boolean;
+                    isGal?: boolean;
                     injectFeaturedNote?: boolean;
                     receiveAnnouncementEmail?: boolean;
                     alwaysMarkNsfw?: boolean;

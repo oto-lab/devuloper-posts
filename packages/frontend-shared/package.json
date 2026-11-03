@@ -21,6 +21,7 @@
 	],
 	"dependencies": {
 		"@misskey-dev/emoji-data": "17.0.3",
+		"galjp": "5.0.0",
 		"i18n": "workspace:*",
 		"json5": "2.2.3",
 		"mfm-js": "0.28.0",

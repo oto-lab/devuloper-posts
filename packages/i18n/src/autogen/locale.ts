@@ -745,6 +745,14 @@ export interface Locale extends ILocale {
      */
     "flagAsCatDescription": string;
     /**
+     * ギャル文字で話す
+     */
+    "flagAsGal": string;
+    /**
+     * ノートやチャットの本文をギャル文字に変換して表示します
+     */
+    "flagAsGalDescription": string;
+    /**
      * タイムラインにノートへの返信を表示する
      */
     "flagShowTimelineReplies": string;

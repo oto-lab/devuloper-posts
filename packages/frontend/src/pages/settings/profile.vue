@@ -139,6 +139,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</MkSwitch>
 					</SearchMarker>
 
+					<SearchMarker :keywords="['gal', 'galmoji']">
+						<MkSwitch v-model="profile.isGal">
+							<template #label><SearchLabel>{{ i18n.ts.flagAsGal }}</SearchLabel></template>
+							<template #caption>{{ i18n.ts.flagAsGalDescription }}</template>
+						</MkSwitch>
+					</SearchMarker>
+
 					<SearchMarker :keywords="['bot']">
 						<MkSwitch v-model="profile.isBot">
 							<template #label><SearchLabel>{{ i18n.ts.flagAsBot }}</SearchLabel></template>
@@ -203,6 +210,7 @@ const profile = reactive({
 	lang: assertVaildLang($i.lang) ? $i.lang : null,
 	isBot: $i.isBot ?? false,
 	isCat: $i.isCat ?? false,
+	isGal: $i.isGal ?? false,
 });
 
 watch(() => profile, () => {
@@ -253,6 +261,7 @@ function save() {
 		lang: profile.lang || null,
 		isBot: !!profile.isBot,
 		isCat: !!profile.isCat,
+		isGal: !!profile.isGal,
 	}, undefined, {
 		'0b3f9f6a-2f4d-4b1f-9fb4-49d3a2fd7191': {
 			title: i18n.ts.yourNameContainsProhibitedWords,

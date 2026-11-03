@@ -270,6 +270,48 @@ describe('ActivityPub', () => {
 		});
 	});
 
+	describe('isGal field', () => {
+		test('Create person with isGal', async () => {
+			const actor = {
+				...createRandomActor(),
+				isGal: true,
+			};
+
+			resolver.register(actor.id, actor);
+
+			const user = await personService.createPerson(actor.id, resolver);
+
+			assert.strictEqual(user.isGal, true);
+		});
+
+		test('Treat a missing isGal as false', async () => {
+			const actor = createRandomActor();
+
+			resolver.register(actor.id, actor);
+
+			const user = await personService.createPerson(actor.id, resolver);
+
+			assert.strictEqual(user.isGal, false);
+		});
+
+		test('Update person with isGal', async () => {
+			const actor = createRandomActor();
+			resolver.register(actor.id, actor);
+			await personService.createPerson(actor.id, resolver);
+
+			const updatedActor = {
+				...actor,
+				isGal: true,
+			};
+			resolver.register(actor.id, updatedActor);
+
+			await personService.updatePerson(actor.id, resolver, updatedActor);
+
+			const updatedUser = await personService.fetchPerson(actor.id);
+			assert.strictEqual(updatedUser?.isGal, true);
+		});
+	});
+
 	describe('Collection visibility', () => {
 		test('Public following/followers', async () => {
 			const actor = createRandomActor();

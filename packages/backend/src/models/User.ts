@@ -188,6 +188,12 @@ export class MiUser {
 	})
 	public isCat: boolean;
 
+	@Column('boolean', {
+		default: false,
+		comment: 'Whether the User speaks in gal-moji.',
+	})
+	public isGal: boolean;
+
 	@Index()
 	@Column('boolean', {
 		default: true,

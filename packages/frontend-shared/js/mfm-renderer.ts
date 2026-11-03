@@ -6,6 +6,7 @@
 import { h } from 'vue';
 import * as mfm from 'mfm-js';
 import * as Misskey from 'misskey-js';
+import { galjp } from 'galjp';
 import { host } from './config.js';
 import type { Component, VNode, SetupContext } from 'vue';
 
@@ -97,6 +98,14 @@ export function createMfmRenderer<P extends MfmBaseProps = MfmBaseProps>(config:
 
 		const isNote = props.isNote ?? true;
 		const shouldNyaize = props.nyaize ? props.nyaize === 'respect' ? props.author?.isCat : false : false;
+		const shouldGalify = props.nyaize === 'respect' && props.author?.isGal === true;
+
+		// Cat speech goes first so that its output is also rendered in gal-moji
+		const speak = (text: string) => {
+			if (shouldNyaize) text = Misskey.nyaize(text);
+			if (shouldGalify) text = galjp(text);
+			return text;
+		};
 
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 		if (props.text == null || props.text === '') return;
@@ -125,14 +134,14 @@ export function createMfmRenderer<P extends MfmBaseProps = MfmBaseProps>(config:
 		 * Gen Vue Elements from MFM AST
 		 * @param ast MFM AST
 		 * @param scale How times large the text is
-		 * @param disableNyaize Whether nyaize is disabled or not
+		 * @param disableNyaize Whether nyaize and gal-moji conversion are disabled or not
 		 */
 		const genEl = (ast: mfm.MfmNode[], scale: number, disableNyaize = false) => ast.map((token): VNode | string | (VNode | string)[] => {
 			switch (token.type) {
 				case 'text': {
 					let text = token.props.text.replace(/(\r\n|\n|\r)/g, '\n');
-					if (!disableNyaize && shouldNyaize) {
-						text = Misskey.nyaize(text);
+					if (!disableNyaize) {
+						text = speak(text);
 					}
 
 					if (!props.plain) {
@@ -328,15 +337,15 @@ export function createMfmRenderer<P extends MfmBaseProps = MfmBaseProps>(config:
 							if (token.children.length === 1) {
 								const child = token.children[0];
 								let text = child.type === 'text' ? child.props.text : '';
-								if (!disableNyaize && shouldNyaize) {
-									text = Misskey.nyaize(text);
+								if (!disableNyaize) {
+									text = speak(text);
 								}
 								return h('ruby', {}, [text.split(' ')[0], h('rt', text.split(' ')[1])]);
 							} else {
 								const rt = token.children.at(-1)!;
 								let text = rt.type === 'text' ? rt.props.text : '';
-								if (!disableNyaize && shouldNyaize) {
-									text = Misskey.nyaize(text);
+								if (!disableNyaize) {
+									text = speak(text);
 								}
 								return h('ruby', {}, [...genEl(token.children.slice(0, token.children.length - 1), scale), h('rt', text.trim())]);
 							}
