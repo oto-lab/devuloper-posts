@@ -565,7 +565,7 @@ const extension_context_definition = {
 	},
 	'isCat': 'misskey:isCat',
 	// oto-lab/devuloper-posts
-	devuloper: 'https://github.com/oto-lab/devuloper-posts/ns#',
+	devuloper: 'https://github.com/oto-lab/devuloper-posts/blob/oto-lab/docs/ns.md#',
 	'isGal': 'devuloper:isGal',
 	// vcard
 	vcard: 'http://www.w3.org/2006/vcard/ns#',
