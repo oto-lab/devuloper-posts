@@ -568,6 +568,7 @@ export class ApRendererService {
 			discoverable: user.isExplorable,
 			publicKey: this.renderKey(user, keypair, '#main-key'),
 			isCat: user.isCat,
+			isGal: user.isGal,
 			attachment: attachment.length ? attachment : undefined,
 		};
 

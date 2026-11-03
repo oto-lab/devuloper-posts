@@ -41,6 +41,7 @@ describe('ユーザー', () => {
 			avatarDecorations: user.avatarDecorations,
 			isBot: user.isBot,
 			isCat: user.isCat,
+			isGal: user.isGal,
 			instance: user.instance,
 			emojis: user.emojis,
 			onlineStatus: user.onlineStatus,
