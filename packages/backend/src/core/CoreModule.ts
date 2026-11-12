@@ -156,6 +156,7 @@ import { QueueService } from './QueueService.js';
 import { LoggerService } from './LoggerService.js';
 import { TelemetryService } from './telemetry/TelemetryService.js';
 import type { Provider } from '@nestjs/common';
+import { devuloperProviders } from '@/devuloper/index.js';
 
 //#region 文字列ベースでのinjection用(循環参照対応のため)
 const $LoggerService: Provider = { provide: 'LoggerService', useExisting: LoggerService };
@@ -611,6 +612,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$ApQuestionService,
 		$TelemetryService,
 		//#endregion
+		...devuloperProviders,
 	],
 	exports: [
 		QueueModule,
@@ -910,6 +912,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$ApQuestionService,
 		$TelemetryService,
 		//#endregion
+		...devuloperProviders,
 	],
 })
 export class CoreModule { }

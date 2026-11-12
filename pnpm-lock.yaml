@@ -454,6 +454,9 @@ importers:
       feed:
         specifier: 6.0.0
         version: 6.0.0
+      figlet:
+        specifier: 1.12.0
+        version: 1.12.0
       file-type:
         specifier: 22.3.0
         version: 22.3.0(supports-color@10.2.2)
@@ -5572,6 +5575,11 @@ packages:
 
   fflate@0.8.3:
     resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
+
+  figlet@1.12.0:
+    resolution: {integrity: sha512-Ith3WsUi0N/EqGt+0/F6XnWhT04sohhH2tT0Dq7GdUmWbMTIoCbg2Jq9qKggmTO62ST5kRCfB311EmIMbizGyA==}
+    engines: {node: '>= 17.0.0'}
+    hasBin: true
 
   figures@6.1.0:
     resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
@@ -13471,6 +13479,10 @@ snapshots:
       web-streams-polyfill: 3.3.3
 
   fflate@0.8.3: {}
+
+  figlet@1.12.0:
+    dependencies:
+      commander: 14.0.3
 
   figures@6.1.0:
     dependencies:
