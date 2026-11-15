@@ -40,3 +40,17 @@ export async function loadPrefs(): Promise<NoteCommandPrefs> {
 export async function savePrefs(prefs: NoteCommandPrefs): Promise<void> {
 	await misskeyApi('i/registry/set', { scope: PREFS_SCOPE, key: PREFS_KEY, value: prefs });
 }
+
+export type SpotifyStatus = { configured: boolean; linked: boolean; spotifyUserName: string | null };
+
+export function getSpotifyStatus(): Promise<SpotifyStatus> {
+	return callUntyped<SpotifyStatus>('devuloper/spotify/status', {});
+}
+
+export function getSpotifyAuthorizeUrl(): Promise<{ url: string }> {
+	return callUntyped<{ url: string }>('devuloper/spotify/connect', {});
+}
+
+export function unlinkSpotify(): Promise<void> {
+	return callUntyped<void>('devuloper/spotify/disconnect', {});
+}

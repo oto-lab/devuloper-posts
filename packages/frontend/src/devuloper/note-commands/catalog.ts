@@ -188,6 +188,18 @@ export const COMMANDS: CommandDef[] = [
 		],
 	},
 	{
+		name: 'np',
+		label: 'Spotify で再生中の曲',
+		icon: 'ti ti-brand-spotify',
+		group: 'external',
+		preview: true,
+		description: '投稿するときに再生している曲が入ります。先にメニューの「Spotify 連携」で連携してください。',
+		fields: [
+			{ key: 'link', label: 'リンク', role: 'option', type: 'enum', default: 'on', enum: [{ label: '付ける', value: 'on' }, { label: '付けない', value: 'off' }] },
+			{ key: 'format', label: '形式', role: 'option', type: 'enum', default: 'full', enum: [{ label: '曲名 - アーティスト (アルバム)', value: 'full' }, { label: '曲名 - アーティスト', value: 'short' }] },
+		],
+	},
+	{
 		name: 'code',
 		label: 'GitHub のコードを引用',
 		icon: 'ti ti-code',

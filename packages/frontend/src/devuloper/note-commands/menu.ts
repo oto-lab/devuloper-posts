@@ -4,7 +4,7 @@
  */
 
 import { defineAsyncComponent, nextTick } from 'vue';
-import { loadPrefs, previewNoteCommands, savePrefs } from './api.js';
+import { getSpotifyAuthorizeUrl, getSpotifyStatus, loadPrefs, previewNoteCommands, savePrefs, unlinkSpotify } from './api.js';
 import { COMMANDS, buildSyntax } from './catalog.js';
 import type { MenuItem } from '@/types/menu.js';
 import type { Form, FormItem } from '@/utility/form.js';
@@ -105,6 +105,27 @@ async function openSettings() {
 	}));
 }
 
+async function openSpotifySettings() {
+	const status = await os.promiseDialog(getSpotifyStatus());
+	if (!status.configured) {
+		await os.alert({ type: 'info', text: 'このサーバーでは Spotify 連携がまだ設定されていません。' });
+		return;
+	}
+	if (status.linked) {
+		const { canceled } = await os.confirm({
+			type: 'question',
+			text: `Spotify (${status.spotifyUserName ?? '名前なし'}) と連携しています。連携を解除しますか？`,
+			okText: '解除する',
+		});
+		if (!canceled) await os.promiseDialog(unlinkSpotify());
+		return;
+	}
+	const { url } = await os.promiseDialog(getSpotifyAuthorizeUrl());
+	// Opening the tab right after a click keeps popup blockers from stopping it.
+	const { canceled } = await os.confirm({ type: 'info', text: 'Spotify のページを新しいタブで開きます。許可すると、そのタブに完了のメッセージが出ます。', okText: '開く' });
+	if (!canceled) window.open(url, '_blank', 'noopener');
+}
+
 /**
  * Opens the fork's command menu for the post form. The chosen command is inserted as `%%…%%` syntax,
  * which the server runs when the note is posted, so the button and third-party clients share one path.
@@ -147,5 +168,6 @@ export function openNoteCommandMenu(anchor: EventTarget | null, textarea: HTMLTe
 		{ type: 'parent', text: '外部から取ってくる', icon: 'ti ti-world-download', children: COMMANDS.filter(def => def.group === 'external').map(toItem) },
 		{ type: 'divider' },
 		{ text: '設定', icon: 'ti ti-settings', action: openSettings },
+		{ text: 'Spotify 連携', icon: 'ti ti-brand-spotify', action: openSpotifySettings },
 	], anchor);
 }

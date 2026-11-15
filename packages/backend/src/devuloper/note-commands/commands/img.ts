@@ -5,6 +5,7 @@
 
 import { renderCodeSvgs } from '../render/code.js';
 import { renderMathSvg } from '../render/math.js';
+import { renderMermaidPng } from '../render/mermaid.js';
 import { svgToFile } from '../render/svg.js';
 import { NoteCommandError, enumOption, requireMain } from '../types.js';
 import type { GeneratedFile, NoteCommandSpec } from '../types.js';
@@ -34,7 +35,7 @@ export const img: NoteCommandSpec = {
 	name: 'img',
 	main: 'rest',
 	options: ['theme'],
-	async run(input) {
+	async run(input, ctx) {
 		const content = requireMain(input, '%%img ```ts … ```%%');
 		const theme = enumOption(input, 'theme', ['light', 'dark'], 'light');
 		const renderables = findRenderables(content);
@@ -46,7 +47,11 @@ export const img: NoteCommandSpec = {
 				files.push(await svgToFile(renderMathSvg(item.tex, item.display), 'math.png', `数式: ${item.tex}`));
 				continue;
 			}
-			if (item.language?.toLowerCase() === 'mermaid') throw new NoteCommandError('Mermaid の図にはまだ対応していません');
+			if (item.language?.toLowerCase() === 'mermaid') {
+				const data = await renderMermaidPng(ctx.services.config.rootDir, item.code, theme);
+				files.push({ name: 'mermaid.png', type: 'image/png', data, comment: `Mermaid の図\n${item.code}` });
+				continue;
+			}
 			const pages = await renderCodeSvgs(item.code, item.language, theme);
 			for (const [i, svg] of pages.entries()) {
 				files.push(await svgToFile(svg, 'code.png', codeAltText(item.language, item.code, i + 1, pages.length)));

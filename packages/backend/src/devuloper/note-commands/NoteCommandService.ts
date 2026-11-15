@@ -11,6 +11,7 @@ import { DriveService } from '@/core/DriveService.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { IdService } from '@/core/IdService.js';
 import { RoleService } from '@/core/RoleService.js';
+import { SpotifyService } from '@/devuloper/spotify/SpotifyService.js';
 import { DI } from '@/di-symbols.js';
 import type { MiMeta, NoteReactionsRepository, NotesRepository } from '@/models/_.js';
 import { RegistryApiService } from '@/core/RegistryApiService.js';
@@ -104,6 +105,7 @@ export class NoteCommandService {
 		private httpRequestService: HttpRequestService,
 		private idService: IdService,
 		private roleService: RoleService,
+		private spotifyService: SpotifyService,
 		private registryApiService: RegistryApiService,
 	) {
 	}
@@ -132,6 +134,7 @@ export class NoteCommandService {
 				httpRequestService: this.httpRequestService,
 				idService: this.idService,
 				roleService: this.roleService,
+				spotifyService: this.spotifyService,
 				notesRepository: this.notesRepository,
 				noteReactionsRepository: this.noteReactionsRepository,
 			},

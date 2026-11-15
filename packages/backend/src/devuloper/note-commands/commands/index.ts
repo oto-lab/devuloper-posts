@@ -11,6 +11,7 @@ import { code } from './code.js';
 import { contrib } from './contrib.js';
 import { fontCommands } from './font.js';
 import { img } from './img.js';
+import { np } from './np.js';
 import { progress } from './progress.js';
 import { qr } from './qr.js';
 import { randChoose, randDice, randNum, randOmikuji } from './rand.js';
@@ -29,6 +30,7 @@ export const NOTE_COMMANDS: readonly NoteCommandSpec[] = [
 	contrib,
 	...fontCommands,
 	img,
+	np,
 	progress,
 	qr,
 	randChoose,

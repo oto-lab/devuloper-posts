@@ -449,3 +449,7 @@ export * as 'chat/history' from './endpoints/chat/history.js';
 export * as 'chat/read-all' from './endpoints/chat/read-all.js';
 export * as 'v2/admin/emoji/list' from './endpoints/v2/admin/emoji/list.js';
 export * as 'devuloper/note-commands/preview' from '@/devuloper/endpoints/note-commands-preview.js';
+export * as 'devuloper/spotify/callback' from '@/devuloper/endpoints/spotify-callback.js';
+export * as 'devuloper/spotify/connect' from '@/devuloper/endpoints/spotify-connect.js';
+export * as 'devuloper/spotify/disconnect' from '@/devuloper/endpoints/spotify-disconnect.js';
+export * as 'devuloper/spotify/status' from '@/devuloper/endpoints/spotify-status.js';

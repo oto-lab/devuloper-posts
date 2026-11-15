@@ -7,6 +7,7 @@ import type { Config } from '@/config.js';
 import type { HttpRequestService } from '@/core/HttpRequestService.js';
 import type { IdService } from '@/core/IdService.js';
 import type { RoleService } from '@/core/RoleService.js';
+import type { SpotifyService } from '@/devuloper/spotify/SpotifyService.js';
 import type { MiMeta, NoteReactionsRepository, NotesRepository } from '@/models/_.js';
 import type { NoteCommandPrefs } from './prefs.js';
 
@@ -40,6 +41,7 @@ export type NoteCommandServices = {
 	httpRequestService: HttpRequestService;
 	idService: IdService;
 	roleService: RoleService;
+	spotifyService: SpotifyService;
 	notesRepository: NotesRepository;
 	noteReactionsRepository: NoteReactionsRepository;
 };
