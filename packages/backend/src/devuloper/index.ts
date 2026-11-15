@@ -4,6 +4,7 @@
  */
 
 import { NoteCommandService } from './note-commands/NoteCommandService.js';
+import { SpotifyService } from './spotify/SpotifyService.js';
 
 /**
  * Fork-only services, registered and exported by CoreModule through a single spread
@@ -11,4 +12,5 @@ import { NoteCommandService } from './note-commands/NoteCommandService.js';
  */
 export const devuloperProviders = [
 	NoteCommandService,
+	SpotifyService,
 ];

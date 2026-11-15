@@ -19,15 +19,20 @@ export type CommandField = {
 	default?: string | boolean;
 	/** Value written for a checked boolean option; `on` when omitted. */
 	onValue?: string;
-	/** Prefilled from the selected text in the post form. */
-	fromSelection?: boolean;
+	/**
+	 * Prefilled from the selected text in the post form, which the syntax then replaces.
+	 * `orWholeText` takes the whole note when nothing is selected.
+	 */
+	fromSelection?: boolean | 'orWholeText';
+	/** The syntax cannot carry spaces in option values; the server reads `_` as a space for these fields. */
+	spacesAsUnderscore?: boolean;
 };
 
 export type CommandDef = {
 	name: string;
 	label: string;
 	icon: string;
-	group: 'text' | 'random';
+	group: 'text' | 'random' | 'image' | 'external';
 	fields: CommandField[];
 	/** False for commands whose result is decided when the note is posted. */
 	preview: boolean;
@@ -118,6 +123,127 @@ export const COMMANDS: CommandDef[] = [
 		],
 	},
 	{
+		name: 'qr',
+		label: 'QR コード',
+		icon: 'ti ti-qrcode',
+		group: 'image',
+		preview: true,
+		fields: [
+			{ key: 'content', label: '中身 (URL や文章)', role: 'main', type: 'string', multiline: true, required: true, fromSelection: true },
+			{ key: 'hide', label: '中身を本文から隠す', role: 'option', type: 'boolean', default: false },
+			{ key: 'size', label: '画像の大きさ (px)', role: 'option', type: 'string', default: '512' },
+			{ key: 'ecc', label: '誤り訂正', role: 'option', type: 'enum', default: 'm', enum: [
+				{ label: 'L (7%)', value: 'l' }, { label: 'M (15%)', value: 'm' }, { label: 'Q (25%)', value: 'q' }, { label: 'H (30%)', value: 'h' },
+			] },
+		],
+	},
+	...(['bar', 'line', 'circle'] as const).map((kind): CommandDef => ({
+		name: `chart.${kind}`,
+		label: { bar: '棒グラフ', line: '折れ線グラフ', circle: '円グラフ' }[kind],
+		icon: { bar: 'ti ti-chart-bar', line: 'ti ti-chart-line', circle: 'ti ti-chart-pie' }[kind],
+		group: 'image',
+		preview: true,
+		fields: [
+			{ key: 'values', label: '値 (| 区切り)', role: 'main', type: 'string', required: true, description: kind === 'circle' ? '例: 3|5|2' : '例: 3|5|2|8。系列を増やすときは / で区切る (3|5/4|1)' },
+			{ key: 'labels', label: 'ラベル (| 区切り)', role: 'option', type: 'string', spacesAsUnderscore: true },
+			{ key: 'title', label: 'タイトル', role: 'option', type: 'string', spacesAsUnderscore: true },
+			...(kind === 'circle' ? [] : [{ key: 'series', label: '系列の名前 (| 区切り)', role: 'option', type: 'string', spacesAsUnderscore: true } satisfies CommandField]),
+		],
+	})),
+	{
+		name: 'img',
+		label: 'コードと数式を画像にする',
+		icon: 'ti ti-photo-code',
+		group: 'image',
+		preview: true,
+		description: '``` のコードブロックと \\( \\) / \\[ \\] の数式を画像にして添付します。本文はそのまま残ります。',
+		fields: [
+			{ key: 'content', label: '対象 (選択していなければノート全体)', role: 'main', type: 'string', multiline: true, required: true, fromSelection: 'orWholeText' },
+			{ key: 'theme', label: 'テーマ', role: 'option', type: 'enum', default: 'light', enum: [{ label: 'ライト', value: 'light' }, { label: 'ダーク', value: 'dark' }] },
+		],
+	},
+	{
+		name: 'stats',
+		label: '統計カード',
+		icon: 'ti ti-report-analytics',
+		group: 'image',
+		preview: true,
+		fields: [
+			{ key: 'range', label: '期間', role: 'main', type: 'enum', default: 'week', enum: [
+				{ label: '今日', value: 'today' }, { label: '昨日', value: 'yesterday' }, { label: '今週', value: 'week' }, { label: '先週', value: 'lastweek' },
+				{ label: '今月', value: 'month' }, { label: '先月', value: 'lastmonth' }, { label: '今年', value: 'year' }, { label: '昨年', value: 'lastyear' },
+				{ label: '直近7日', value: '7' }, { label: '直近30日', value: '30' }, { label: '直近90日', value: '90' },
+			] },
+		],
+	},
+	{
+		name: 'tr',
+		label: '翻訳を付け足す',
+		icon: 'ti ti-language',
+		group: 'external',
+		preview: true,
+		fields: [
+			{ key: 'to', label: '翻訳先の言語', role: 'main', type: 'string', required: true, default: 'en', description: '例: en、ko、en|ko' },
+			{ key: 'content', label: '文章 (空欄ならノート全体)', role: 'text', type: 'string', multiline: true, fromSelection: true },
+		],
+	},
+	{
+		name: 'np',
+		label: 'Spotify で再生中の曲',
+		icon: 'ti ti-brand-spotify',
+		group: 'external',
+		preview: true,
+		description: '投稿するときに再生している曲が入ります。先にメニューの「Spotify 連携」で連携してください。',
+		fields: [
+			{ key: 'link', label: 'リンク', role: 'option', type: 'enum', default: 'on', enum: [{ label: '付ける', value: 'on' }, { label: '付けない', value: 'off' }] },
+			{ key: 'format', label: '形式', role: 'option', type: 'enum', default: 'full', enum: [{ label: '曲名 - アーティスト (アルバム)', value: 'full' }, { label: '曲名 - アーティスト', value: 'short' }] },
+		],
+	},
+	{
+		name: 'code',
+		label: 'GitHub のコードを引用',
+		icon: 'ti ti-code',
+		group: 'external',
+		preview: true,
+		fields: [
+			{ key: 'source', label: 'ファイルの URL', role: 'main', type: 'string', required: true, description: '例: https://github.com/owner/repo/blob/main/src/a.ts#L10-L20、または owner/repo src/a.ts' },
+			{ key: 'lines', label: '行 (開始|終了)', role: 'option', type: 'string' },
+			{ key: 'ref', label: 'ブランチやコミット (短い書き方のとき)', role: 'option', type: 'string' },
+			{ key: 'img', label: 'ハイライト付きの画像も添付する', role: 'option', type: 'boolean', default: false },
+		],
+	},
+	{
+		name: 'contrib',
+		label: 'GitHub のコントリビューション',
+		icon: 'ti ti-brand-github',
+		group: 'external',
+		preview: true,
+		fields: [
+			{ key: 'user', label: 'GitHub のユーザー名 (空欄なら設定の値)', role: 'main', type: 'string' },
+			{ key: 'weeks', label: '週数', role: 'option', type: 'string', default: '53' },
+		],
+	},
+	...([
+		['card', 'URL からカード', 'URL'],
+		['card.gh', 'GitHub', 'owner/repo、owner/repo#12、owner/repo@コミット、ユーザー名、または URL'],
+		['card.npm', 'npm', 'パッケージ名'],
+		['card.pypi', 'PyPI', 'パッケージ名'],
+		['card.crates', 'crates.io', 'クレート名'],
+		['card.docker', 'Docker Hub', 'イメージ名 (例: library/redis)'],
+	] as const).map(([name, label, description]): CommandDef => ({
+		name,
+		label: `カード: ${label}`,
+		icon: 'ti ti-id',
+		group: 'external',
+		preview: true,
+		fields: [
+			{ key: 'target', label: '対象', role: 'main', type: 'string', required: true, description },
+			{ key: 'style', label: '画像', role: 'option', type: 'enum', default: '', enum: [
+				{ label: '自動', value: '' }, { label: 'サイトのプレビュー画像 (ogp)', value: 'ogp' }, { label: 'カードを作る (card)', value: 'card' },
+			] },
+		],
+	})),
+	{
 		name: 'rand.dice',
 		label: 'サイコロ',
 		icon: 'ti ti-dice-5',
@@ -173,7 +299,7 @@ export function buildSyntax(def: CommandDef, values: Record<string, unknown>): s
 			if (value === true) parts.push(`${field.key}:${field.onValue ?? 'on'}`);
 			continue;
 		}
-		const text = typeof value === 'string' ? value.replace(/\s/g, '') : '';
+		const text = typeof value === 'string' ? value.trim().replace(/\s*\|\s*/g, '|').replace(/\s+/g, field.spacesAsUnderscore ? '_' : '') : '';
 		if (text !== '' && text !== field.default) parts.push(`${field.key}:${escapePercent(text)}`);
 	}
 	for (const role of ['main', 'text'] as const) {

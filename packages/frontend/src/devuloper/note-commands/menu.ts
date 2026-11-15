@@ -4,12 +4,12 @@
  */
 
 import { defineAsyncComponent, nextTick } from 'vue';
-import * as os from '@/os.js';
+import { getSpotifyAuthorizeUrl, getSpotifyStatus, loadPrefs, previewNoteCommands, savePrefs, unlinkSpotify } from './api.js';
+import { COMMANDS, buildSyntax } from './catalog.js';
 import type { MenuItem } from '@/types/menu.js';
 import type { Form, FormItem } from '@/utility/form.js';
-import { loadPrefs, previewNoteCommands, savePrefs } from './api.js';
-import { COMMANDS, buildSyntax } from './catalog.js';
 import type { CommandDef, CommandField } from './catalog.js';
+import * as os from '@/os.js';
 
 type Selection = { start: number; end: number; text: string };
 
@@ -54,7 +54,7 @@ async function confirmWithPreview(syntax: string): Promise<boolean> {
 	});
 }
 
-async function runCommand(def: CommandDef, selection: Selection, insert: (syntax: string, replaceSelection: boolean) => void) {
+async function runCommand(def: CommandDef, selection: Selection, insert: (syntax: string, replaced: Selection | null) => void) {
 	let values: Record<string, unknown> = {};
 	if (def.fields.length > 0) {
 		const form: Form = Object.fromEntries(def.fields.map(field => [field.key, toFormItem(field, selection)]));
@@ -65,8 +65,8 @@ async function runCommand(def: CommandDef, selection: Selection, insert: (syntax
 	const syntax = buildSyntax(def, values);
 	if (def.preview && !await confirmWithPreview(syntax)) return;
 
-	const usedSelection = def.fields.some(field => field.fromSelection && values[field.key] === selection.text);
-	insert(syntax, usedSelection && selection.text !== '');
+	const usedSelection = selection.text !== '' && def.fields.some(field => field.fromSelection && values[field.key] === selection.text);
+	insert(syntax, usedSelection ? selection : null);
 }
 
 async function openSettings() {
@@ -105,6 +105,27 @@ async function openSettings() {
 	}));
 }
 
+async function openSpotifySettings() {
+	const status = await os.promiseDialog(getSpotifyStatus());
+	if (!status.configured) {
+		await os.alert({ type: 'info', text: 'このサーバーでは Spotify 連携がまだ設定されていません。' });
+		return;
+	}
+	if (status.linked) {
+		const { canceled } = await os.confirm({
+			type: 'question',
+			text: `Spotify (${status.spotifyUserName ?? '名前なし'}) と連携しています。連携を解除しますか？`,
+			okText: '解除する',
+		});
+		if (!canceled) await os.promiseDialog(unlinkSpotify());
+		return;
+	}
+	const { url } = await os.promiseDialog(getSpotifyAuthorizeUrl());
+	// Opening the tab right after a click keeps popup blockers from stopping it.
+	const { canceled } = await os.confirm({ type: 'info', text: 'Spotify のページを新しいタブで開きます。許可すると、そのタブに完了のメッセージが出ます。', okText: '開く' });
+	if (!canceled) window.open(url, '_blank', 'noopener');
+}
+
 /**
  * Opens the fork's command menu for the post form. The chosen command is inserted as `%%…%%` syntax,
  * which the server runs when the note is posted, so the button and third-party clients share one path.
@@ -119,18 +140,23 @@ export function openNoteCommandMenu(anchor: EventTarget | null, textarea: HTMLTe
 	const end = textarea?.selectionEnd ?? current.length;
 	const selection: Selection = { start, end, text: current.slice(start, end) };
 
-	const insert = (syntax: string, replaceSelection: boolean) => {
-		const from = replaceSelection ? selection.start : selection.end;
+	const insert = (syntax: string, replaced: Selection | null) => {
+		const from = replaced?.start ?? selection.end;
+		const to = replaced?.end ?? selection.end;
 		// The text may have changed while the dialogs were open, so read it again.
 		const latest = getText();
-		setText(latest.slice(0, from) + syntax + latest.slice(selection.end));
+		setText(latest.slice(0, from) + syntax + latest.slice(to));
 		const caret = from + syntax.length;
 		nextTick(() => {
 			textarea?.focus();
 			textarea?.setSelectionRange(caret, caret);
 		});
 	};
-	const toItem = (def: CommandDef): MenuItem => ({ text: def.label, icon: def.icon, action: () => runCommand(def, selection, insert) });
+	const selectionFor = (def: CommandDef): Selection => {
+		const wantsWholeText = def.fields.some(field => field.fromSelection === 'orWholeText');
+		return selection.text === '' && wantsWholeText ? { start: 0, end: current.length, text: current } : selection;
+	};
+	const toItem = (def: CommandDef): MenuItem => ({ text: def.label, icon: def.icon, action: () => runCommand(def, selectionFor(def), insert) });
 	const fonts = COMMANDS.filter(def => def.name.startsWith('font.'));
 
 	os.popupMenu([
@@ -138,7 +164,10 @@ export function openNoteCommandMenu(anchor: EventTarget | null, textarea: HTMLTe
 		{ type: 'parent', text: '装飾文字', icon: 'ti ti-typography', children: fonts.map(toItem) },
 		...COMMANDS.filter(def => def.group === 'text' && !def.name.startsWith('font.')).map(toItem),
 		{ type: 'parent', text: 'ランダム', icon: 'ti ti-dice', children: COMMANDS.filter(def => def.group === 'random').map(toItem) },
+		{ type: 'parent', text: '画像を添付', icon: 'ti ti-photo-plus', children: COMMANDS.filter(def => def.group === 'image').map(toItem) },
+		{ type: 'parent', text: '外部から取ってくる', icon: 'ti ti-world-download', children: COMMANDS.filter(def => def.group === 'external').map(toItem) },
 		{ type: 'divider' },
 		{ text: '設定', icon: 'ti ti-settings', action: openSettings },
+		{ text: 'Spotify 連携', icon: 'ti ti-brand-spotify', action: openSpotifySettings },
 	], anchor);
 }

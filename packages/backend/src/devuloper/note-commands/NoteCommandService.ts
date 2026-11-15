@@ -4,9 +4,16 @@
  */
 
 import { promises as fs } from 'node:fs';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DB_MAX_IMAGE_COMMENT_LENGTH, MAX_NOTE_TEXT_LENGTH } from '@/const.js';
+import type { Config } from '@/config.js';
 import { DriveService } from '@/core/DriveService.js';
+import { HttpRequestService } from '@/core/HttpRequestService.js';
+import { IdService } from '@/core/IdService.js';
+import { RoleService } from '@/core/RoleService.js';
+import { SpotifyService } from '@/devuloper/spotify/SpotifyService.js';
+import { DI } from '@/di-symbols.js';
+import type { MiMeta, NoteReactionsRepository, NotesRepository } from '@/models/_.js';
 import { RegistryApiService } from '@/core/RegistryApiService.js';
 import { bindThis } from '@/decorators.js';
 import { createTemp } from '@/misc/create-temp.js';
@@ -16,7 +23,8 @@ import { NOTE_COMMANDS } from './commands/index.js';
 import { PREFS_KEY, PREFS_SCOPE, readPrefs } from './prefs.js';
 import { findCommands, parseArgs, splitFirstWord } from './syntax.js';
 import { NoteCommandError } from './types.js';
-import type { GeneratedFile, NoteCommandContext, NoteCommandInput, NoteCommandSpec } from './types.js';
+import type { CommandOccurrence } from './syntax.js';
+import type { GeneratedFile, NoteCommandContext, NoteCommandInput, NoteCommandOutput, NoteCommandSpec } from './types.js';
 
 const MAX_COMMANDS_PER_NOTE = 10;
 const MAX_FILES_PER_NOTE = 16;
@@ -81,7 +89,23 @@ function toInput(spec: NoteCommandSpec, body: string): NoteCommandInput {
 @Injectable()
 export class NoteCommandService {
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
+		@Inject(DI.meta)
+		private meta: MiMeta,
+
+		@Inject(DI.notesRepository)
+		private notesRepository: NotesRepository,
+
+		@Inject(DI.noteReactionsRepository)
+		private noteReactionsRepository: NoteReactionsRepository,
+
 		private driveService: DriveService,
+		private httpRequestService: HttpRequestService,
+		private idService: IdService,
+		private roleService: RoleService,
+		private spotifyService: SpotifyService,
 		private registryApiService: RegistryApiService,
 	) {
 	}
@@ -104,24 +128,65 @@ export class NoteCommandService {
 			user,
 			prefs: readPrefs((await this.registryApiService.getItem(user.id, null, PREFS_SCOPE, PREFS_KEY))?.value),
 			now: new Date(),
+			services: {
+				config: this.config,
+				meta: this.meta,
+				httpRequestService: this.httpRequestService,
+				idService: this.idService,
+				roleService: this.roleService,
+				spotifyService: this.spotifyService,
+				notesRepository: this.notesRepository,
+				noteReactionsRepository: this.noteReactionsRepository,
+			},
 		};
 
-		let expanded = '';
-		let cursor = 0;
-		const files: GeneratedFile[] = [];
-		for (const occurrence of occurrences) {
-			try {
-				const spec = resolveSpec(occurrence.name);
-				const output = await spec.run(toInput(spec, occurrence.body), ctx);
-				expanded += text.slice(cursor, occurrence.start) + output.text;
-				files.push(...output.files ?? []);
-			} catch (err) {
-				if (err instanceof NoteCommandError) throw commandFailed(`%%${occurrence.name}%%: ${err.message}`, { command: occurrence.name });
-				throw err;
+		const outputs = new Map<CommandOccurrence, NoteCommandOutput>();
+		const assemble = () => {
+			let assembled = '';
+			let cursor = 0;
+			for (const occurrence of occurrences) {
+				assembled += text.slice(cursor, occurrence.start) + (outputs.get(occurrence)?.text ?? '');
+				cursor = occurrence.end;
 			}
-			cursor = occurrence.end;
+			return assembled + text.slice(cursor);
+		};
+
+		const wholeNote: CommandOccurrence[] = [];
+		for (const occurrence of occurrences) {
+			const spec = this.specFor(occurrence);
+			if (spec.wholeNote) {
+				wholeNote.push(occurrence);
+				continue;
+			}
+			outputs.set(occurrence, await this.run(spec, occurrence, ctx));
 		}
-		return { text: expanded + text.slice(cursor), files };
+		// Whole-note commands see the note as it will be posted, minus themselves.
+		const noteText = wholeNote.length > 0 ? assemble().trim() : '';
+		for (const occurrence of wholeNote) {
+			outputs.set(occurrence, await this.run(this.specFor(occurrence), occurrence, { ...ctx, noteText }));
+		}
+
+		return { text: assemble(), files: occurrences.flatMap(occurrence => outputs.get(occurrence)?.files ?? []) };
+	}
+
+	private specFor(occurrence: CommandOccurrence): NoteCommandSpec {
+		try {
+			return resolveSpec(occurrence.name);
+		} catch (err) {
+			throw this.wrapError(err, occurrence);
+		}
+	}
+
+	private async run(spec: NoteCommandSpec, occurrence: CommandOccurrence, ctx: NoteCommandContext): Promise<NoteCommandOutput> {
+		try {
+			return await spec.run(toInput(spec, occurrence.body), ctx);
+		} catch (err) {
+			throw this.wrapError(err, occurrence);
+		}
+	}
+
+	private wrapError(err: unknown, occurrence: CommandOccurrence): unknown {
+		return err instanceof NoteCommandError ? commandFailed(`%%${occurrence.name}%%: ${err.message}`, { command: occurrence.name }) : err;
 	}
 
 	/**

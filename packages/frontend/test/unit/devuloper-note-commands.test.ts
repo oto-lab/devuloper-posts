@@ -25,3 +25,9 @@ describe('buildSyntax', () => {
 		expect(buildSyntax(command('rand.omikuji'), {})).toBe('%%rand.omikuji%%');
 	});
 });
+
+describe('buildSyntax for images', () => {
+	test('writes spaces in titles and labels as underscores', () => {
+		expect(buildSyntax(command('chart.bar'), { values: '3|5', labels: '月曜 | 火曜', title: '今週 の 数', series: '' })).toBe('%%chart.bar labels:月曜|火曜 title:今週_の_数 3|5%%');
+	});
+});

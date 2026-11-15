@@ -14,7 +14,7 @@ import { unit } from '@/devuloper/note-commands/commands/unit.js';
 import { DEFAULT_PREFS, readPrefs } from '@/devuloper/note-commands/prefs.js';
 import { findCommands, parseArgs, splitFirstWord } from '@/devuloper/note-commands/syntax.js';
 import { NoteCommandError } from '@/devuloper/note-commands/types.js';
-import type { NoteCommandContext, NoteCommandInput, NoteCommandSpec } from '@/devuloper/note-commands/types.js';
+import type { NoteCommandContext, NoteCommandInput, NoteCommandServices, NoteCommandSpec } from '@/devuloper/note-commands/types.js';
 
 const isKnown = (name: string) => ['rand', 'qr', 'tr', 'stats'].includes(name.split('.')[0]);
 
@@ -22,6 +22,7 @@ const ctx: NoteCommandContext = {
 	user: { id: 'u', username: 'alice', host: null },
 	prefs: DEFAULT_PREFS,
 	now: new Date('2026-11-12T03:00:00Z'),
+	services: {} as NoteCommandServices,
 };
 
 function input(main: string | null, options: Record<string, string> = {}): NoteCommandInput {
