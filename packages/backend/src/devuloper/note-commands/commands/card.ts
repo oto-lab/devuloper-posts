@@ -76,8 +76,10 @@ function gitHubUrl(target: GitHubTarget): string {
 	}
 }
 
-function firstLine(text: string | null | undefined): string | null {
-	return text?.split('\n').find(line => line.trim() !== '')?.trim() ?? null;
+/** The first line of prose in Markdown, skipping headings and dropping list, quote and emphasis markers. */
+export function firstLine(text: string | null | undefined): string | null {
+	const line = text?.split('\n').map(candidate => candidate.trim()).find(candidate => candidate !== '' && !candidate.startsWith('#'));
+	return line?.replace(/^(?:[-*+>]|\d+\.)\s+/, '').replace(/\*\*|__|`/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') ?? null;
 }
 
 function githubTarget(ctx: NoteCommandContext, target: GitHubTarget): Target {
@@ -90,7 +92,9 @@ function githubTarget(ctx: NoteCommandContext, target: GitHubTarget): Target {
 	};
 	// GitHub serves preview images for repositories and their pages, but only under the page's real path (pull, not issues).
 	// The first path segment is an arbitrary cache key.
-	const ogImage = async () => target.kind === 'user' || target.kind === 'gist' ? null : `https://opengraph.githubassets.com/1/${(await url()).replace('https://github.com/', '')}`;
+	// The image service answers release pages with 429 instead of an image, so releases always get a card.
+	const hasPreviewImage = target.kind !== 'user' && target.kind !== 'gist' && target.kind !== 'release';
+	const ogImage = async () => hasPreviewImage ? `https://opengraph.githubassets.com/1/${(await url()).replace('https://github.com/', '')}` : null;
 
 	const card = async (): Promise<Card> => {
 		switch (target.kind) {
@@ -155,7 +159,7 @@ function githubTarget(ctx: NoteCommandContext, target: GitHubTarget): Target {
 				throw new NoteCommandError('Discussion は style:ogp だけに対応しています');
 		}
 	};
-	return { url, ogImage, card, defaultStyle: target.kind === 'user' || target.kind === 'gist' ? 'card' : 'ogp' };
+	return { url, ogImage, card, defaultStyle: hasPreviewImage ? 'ogp' : 'card' };
 }
 
 function packageName(raw: string, pattern: RegExp, what: string): string {
@@ -309,7 +313,12 @@ async function runCard(source: Source, main: string, style: Style | null, ctx: N
 			// Alt text comes from the card data when it can be fetched, so the image is still described.
 			const card = await target.card().catch(() => null);
 			const alt = card != null ? describeCard({ ...card, fetchedOn }) : `${url} のプレビュー画像 (取得: ${fetchedOn})`;
-			return { text: url, files: [await toAttachment(ctx, imageUrl, alt)] };
+			try {
+				return { text: url, files: [await toAttachment(ctx, imageUrl, alt)] };
+			} catch (err) {
+				// Only an explicit style:ogp surfaces the failure; otherwise a card drawn here is just as good.
+				if (style === 'ogp') throw err;
+			}
 		}
 	}
 	const card = { ...await target.card(), fetchedOn };
