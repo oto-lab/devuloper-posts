@@ -6,9 +6,8 @@
 import type { Config } from '@/config.js';
 import type { HttpRequestService } from '@/core/HttpRequestService.js';
 import type { IdService } from '@/core/IdService.js';
-import type { RoleService } from '@/core/RoleService.js';
 import type { SpotifyService } from '@/devuloper/spotify/SpotifyService.js';
-import type { MiMeta, NoteReactionsRepository, NotesRepository } from '@/models/_.js';
+import type { NoteReactionsRepository, NotesRepository } from '@/models/_.js';
 import type { NoteCommandPrefs } from './prefs.js';
 
 /** A user-facing failure; the message is shown to the poster as is. */
@@ -37,10 +36,8 @@ export type NoteCommandInput = {
 
 export type NoteCommandServices = {
 	config: Config;
-	meta: MiMeta;
 	httpRequestService: HttpRequestService;
 	idService: IdService;
-	roleService: RoleService;
 	spotifyService: SpotifyService;
 	notesRepository: NotesRepository;
 	noteReactionsRepository: NoteReactionsRepository;
@@ -51,11 +48,6 @@ export type NoteCommandContext = {
 	prefs: NoteCommandPrefs;
 	now: Date;
 	services: NoteCommandServices;
-	/**
-	 * The note's text with every other command expanded and this one removed.
-	 * Only set for `wholeNote` commands, which run after all the others.
-	 */
-	noteText?: string;
 };
 
 export type NoteCommandSpec = {
@@ -66,8 +58,6 @@ export type NoteCommandSpec = {
 	mainKey?: string;
 	options?: readonly string[];
 	takesText?: boolean;
-	/** Runs after the other commands and receives the rest of the note as `ctx.noteText`. */
-	wholeNote?: boolean;
 	run(input: NoteCommandInput, ctx: NoteCommandContext): NoteCommandOutput | Promise<NoteCommandOutput>;
 };
 

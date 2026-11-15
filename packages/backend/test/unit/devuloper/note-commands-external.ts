@@ -7,27 +7,9 @@ import { describe, expect, test } from 'vitest';
 import { detectSource, parseGitHubTarget } from '@/devuloper/note-commands/commands/card.js';
 import { languageOf, parseCodeReference } from '@/devuloper/note-commands/commands/code.js';
 import { parseContributionsHtml } from '@/devuloper/note-commands/commands/contrib.js';
-import { parseTargets, protectForTranslation, restoreFromTranslation } from '@/devuloper/note-commands/commands/tr.js';
 import { formatCount } from '@/devuloper/note-commands/render/card.js';
 import { wrapText } from '@/devuloper/note-commands/render/svg.js';
 import { NoteCommandError } from '@/devuloper/note-commands/types.js';
-
-describe('tr', () => {
-	test('protects mentions, URLs, hashtags, emoji and code', () => {
-		const source = 'hi @alice@example.com see https://example.com/a?b=1&c=2 #tag :blob: `x < y` & more';
-		const protectedText = protectForTranslation(source);
-		expect(protectedText).toBe('hi <x>@alice@example.com</x> see <x>https://example.com/a?b=1&amp;c=2</x> <x>#tag</x> <x>:blob:</x> <x>`x &lt; y`</x> &amp; more');
-		expect(restoreFromTranslation(protectedText)).toBe(source);
-	});
-
-	test('maps language codes to DeepL targets', () => {
-		expect(parseTargets('en|ko|zh')).toEqual([
-			{ code: 'en', deepl: 'EN-US' }, { code: 'ko', deepl: 'KO' }, { code: 'zh', deepl: 'ZH-HANS' },
-		]);
-		expect(() => parseTargets('english')).toThrow(NoteCommandError);
-		expect(() => parseTargets('en|ko|fr|de')).toThrow(NoteCommandError);
-	});
-});
 
 describe('code', () => {
 	test('reads GitHub blob URLs', () => {
