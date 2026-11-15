@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, test } from 'vitest';
-import { detectSource, parseGitHubTarget } from '@/devuloper/note-commands/commands/card.js';
+import { detectSource, firstLine, parseGitHubTarget } from '@/devuloper/note-commands/commands/card.js';
 import { languageOf, parseCodeReference } from '@/devuloper/note-commands/commands/code.js';
 import { parseContributionsHtml } from '@/devuloper/note-commands/commands/contrib.js';
 import { formatCount } from '@/devuloper/note-commands/render/card.js';
@@ -72,6 +72,12 @@ describe('card', () => {
 		expect(detectSource('https://hub.docker.com/_/redis')).toBe('docker');
 		expect(detectSource('https://example.com/')).toBe('ogp');
 		expect(() => detectSource('galjp')).toThrow(NoteCommandError);
+	});
+
+	test('takes the first line of prose from Markdown', () => {
+		expect(firstLine('### Note\n\n- **Breaking**: see [the docs](https://example.com) for `x`')).toBe('Breaking: see the docs for x');
+		expect(firstLine('## Only a heading')).toBeNull();
+		expect(firstLine(null)).toBeNull();
 	});
 
 	test('formats counts', () => {
