@@ -10,10 +10,9 @@ import type { Config } from '@/config.js';
 import { DriveService } from '@/core/DriveService.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { IdService } from '@/core/IdService.js';
-import { RoleService } from '@/core/RoleService.js';
 import { SpotifyService } from '@/devuloper/spotify/SpotifyService.js';
 import { DI } from '@/di-symbols.js';
-import type { MiMeta, NoteReactionsRepository, NotesRepository } from '@/models/_.js';
+import type { NoteReactionsRepository, NotesRepository } from '@/models/_.js';
 import { RegistryApiService } from '@/core/RegistryApiService.js';
 import { bindThis } from '@/decorators.js';
 import { createTemp } from '@/misc/create-temp.js';
@@ -92,9 +91,6 @@ export class NoteCommandService {
 		@Inject(DI.config)
 		private config: Config,
 
-		@Inject(DI.meta)
-		private meta: MiMeta,
-
 		@Inject(DI.notesRepository)
 		private notesRepository: NotesRepository,
 
@@ -104,7 +100,6 @@ export class NoteCommandService {
 		private driveService: DriveService,
 		private httpRequestService: HttpRequestService,
 		private idService: IdService,
-		private roleService: RoleService,
 		private spotifyService: SpotifyService,
 		private registryApiService: RegistryApiService,
 	) {
@@ -130,43 +125,24 @@ export class NoteCommandService {
 			now: new Date(),
 			services: {
 				config: this.config,
-				meta: this.meta,
 				httpRequestService: this.httpRequestService,
 				idService: this.idService,
-				roleService: this.roleService,
 				spotifyService: this.spotifyService,
 				notesRepository: this.notesRepository,
 				noteReactionsRepository: this.noteReactionsRepository,
 			},
 		};
 
-		const outputs = new Map<CommandOccurrence, NoteCommandOutput>();
-		const assemble = () => {
-			let assembled = '';
-			let cursor = 0;
-			for (const occurrence of occurrences) {
-				assembled += text.slice(cursor, occurrence.start) + (outputs.get(occurrence)?.text ?? '');
-				cursor = occurrence.end;
-			}
-			return assembled + text.slice(cursor);
-		};
-
-		const wholeNote: CommandOccurrence[] = [];
+		let expanded = '';
+		let cursor = 0;
+		const files: GeneratedFile[] = [];
 		for (const occurrence of occurrences) {
-			const spec = this.specFor(occurrence);
-			if (spec.wholeNote) {
-				wholeNote.push(occurrence);
-				continue;
-			}
-			outputs.set(occurrence, await this.run(spec, occurrence, ctx));
+			const output = await this.run(this.specFor(occurrence), occurrence, ctx);
+			expanded += text.slice(cursor, occurrence.start) + output.text;
+			files.push(...output.files ?? []);
+			cursor = occurrence.end;
 		}
-		// Whole-note commands see the note as it will be posted, minus themselves.
-		const noteText = wholeNote.length > 0 ? assemble().trim() : '';
-		for (const occurrence of wholeNote) {
-			outputs.set(occurrence, await this.run(this.specFor(occurrence), occurrence, { ...ctx, noteText }));
-		}
-
-		return { text: assemble(), files: occurrences.flatMap(occurrence => outputs.get(occurrence)?.files ?? []) };
+		return { text: expanded + text.slice(cursor), files };
 	}
 
 	private specFor(occurrence: CommandOccurrence): NoteCommandSpec {

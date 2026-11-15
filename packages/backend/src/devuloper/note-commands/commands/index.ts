@@ -17,7 +17,6 @@ import { qr } from './qr.js';
 import { randChoose, randDice, randNum, randOmikuji } from './rand.js';
 import { stats } from './stats.js';
 import { time } from './time.js';
-import { tr } from './tr.js';
 import { unit } from './unit.js';
 import type { NoteCommandSpec } from '../types.js';
 
@@ -39,6 +38,5 @@ export const NOTE_COMMANDS: readonly NoteCommandSpec[] = [
 	randOmikuji,
 	stats,
 	time,
-	tr,
 	unit,
 ];

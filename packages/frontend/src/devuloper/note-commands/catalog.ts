@@ -177,17 +177,6 @@ export const COMMANDS: CommandDef[] = [
 		],
 	},
 	{
-		name: 'tr',
-		label: '翻訳を付け足す',
-		icon: 'ti ti-language',
-		group: 'external',
-		preview: true,
-		fields: [
-			{ key: 'to', label: '翻訳先の言語', role: 'main', type: 'string', required: true, default: 'en', description: '例: en、ko、en|ko' },
-			{ key: 'content', label: '文章 (空欄ならノート全体)', role: 'text', type: 'string', multiline: true, fromSelection: true },
-		],
-	},
-	{
 		name: 'np',
 		label: 'Spotify で再生中の曲',
 		icon: 'ti ti-brand-spotify',
