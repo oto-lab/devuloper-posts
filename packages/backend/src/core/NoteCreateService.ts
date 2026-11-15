@@ -58,6 +58,7 @@ import { CollapsedQueue } from '@/misc/collapsed-queue.js';
 import { CacheService } from '@/core/CacheService.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
 import { extractUrlsForKeyWordCheck } from '@/misc/extract-urls-for-keyword-check.js';
+import { NoteCommandService } from '@/devuloper/note-commands/NoteCommandService.js';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -270,6 +271,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		private utilityService: UtilityService,
 		private userBlockingService: UserBlockingService,
 		private cacheService: CacheService,
+		private noteCommandService: NoteCommandService,
 	) {
 		this.updateNotesCountQueue = new CollapsedQueue(process.env.NODE_ENV !== 'test' ? 60 * 1000 * 5 : 0, this.collapseNotesCount, this.performUpdateNotesCount);
 	}
@@ -298,6 +300,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 		apHashtags?: string[] | null;
 		apEmojis?: string[] | null;
 	}): Promise<MiNote> {
+		data = await this.noteCommandService.expandNote(user, data);
+
 		const visibleUsers = data.visibleUserIds.length > 0 ? await this.usersRepository.findBy({
 			id: In(data.visibleUserIds),
 		}) : [];

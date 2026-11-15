@@ -102,6 +102,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<button v-tooltip="i18n.ts.mention" class="_button" :class="$style.footerButton" @click="insertMention"><i class="ti ti-at"></i></button>
 			<button v-if="showAddMfmFunction" v-tooltip="i18n.ts.addMfmFunction" :class="['_button', $style.footerButton]" @click="insertMfmFunction"><i class="ti ti-palette"></i></button>
 			<button v-if="postFormActions.length > 0" v-tooltip="i18n.ts.plugins" class="_button" :class="$style.footerButton" @click="showActions"><i class="ti ti-plug"></i></button>
+			<button v-tooltip="'ノート用コマンド'" class="_button" :class="$style.footerButton" @click="ev => openNoteCommandMenu(ev.currentTarget, textareaEl, () => text, value => text = value)"><i class="ti ti-terminal-2"></i></button>
 		</div>
 		<div :class="$style.footerRight">
 			<button v-tooltip="i18n.ts.emoji" :class="['_button', $style.footerButton]" @click="insertEmoji"><i class="ti ti-mood-happy"></i></button>
@@ -118,6 +119,7 @@ import { watch, nextTick, onMounted, defineAsyncComponent, provide, shallowRef, 
 import * as mfm from 'mfm-js';
 import * as Misskey from 'misskey-js';
 import insertTextAtCursor from 'insert-text-at-cursor';
+import { openNoteCommandMenu } from '@/devuloper/note-commands/menu.js';
 import { toASCII } from 'punycode.js';
 import { host, url } from '@@/js/config.js';
 import MkUploaderItems from './MkUploaderItems.vue';
