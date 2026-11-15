@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, test } from 'vitest';
-import { COMMANDS, buildSyntax } from '@/devuloper/note-commands/catalog.js';
+import { COMMANDS, buildSyntax, describeSyntax } from '@/devuloper/note-commands/catalog.js';
 
 const command = (name: string) => COMMANDS.find(def => def.name === name)!;
 
@@ -29,5 +29,13 @@ describe('buildSyntax', () => {
 describe('buildSyntax for images', () => {
 	test('writes spaces in titles and labels as underscores', () => {
 		expect(buildSyntax(command('chart.bar'), { values: '3|5', labels: '月曜 | 火曜', title: '今週 の 数', series: '' })).toBe('%%chart.bar labels:月曜|火曜 title:今週_の_数 3|5%%');
+	});
+});
+
+describe('describeSyntax', () => {
+	test('shows options as optional and arguments by label', () => {
+		expect(describeSyntax(command('rand.choose'))).toBe('%%rand.choose [count:…] <選択肢 (| 区切り)>%%');
+		expect(describeSyntax(command('qr'))).toBe('%%qr [hide:on] [size:…] [ecc:l|m|q|h] <中身 (URL や文章)>%%');
+		expect(describeSyntax(command('rand.omikuji'))).toBe('%%rand.omikuji%%');
 	});
 });

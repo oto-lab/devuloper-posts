@@ -185,7 +185,9 @@ export const COMMANDS: CommandDef[] = [
 		description: '投稿するときに再生している曲が入ります。先にメニューの「Spotify 連携」で連携してください。',
 		fields: [
 			{ key: 'link', label: 'リンク', role: 'option', type: 'enum', default: 'on', enum: [{ label: '付ける', value: 'on' }, { label: '付けない', value: 'off' }] },
-			{ key: 'format', label: '形式', role: 'option', type: 'enum', default: 'full', enum: [{ label: '曲名 - アーティスト (アルバム)', value: 'full' }, { label: '曲名 - アーティスト', value: 'short' }] },
+			{ key: 'format', label: '形式', role: 'option', type: 'enum', default: 'nowplaying', enum: [
+				{ label: '#NowPlaying と 曲名 - アーティスト', value: 'nowplaying' }, { label: '🎵 曲名 - アーティスト (アルバム)', value: 'full' }, { label: '🎵 曲名 - アーティスト', value: 'short' },
+			] },
 		],
 	},
 	{
@@ -298,4 +300,29 @@ export function buildSyntax(def: CommandDef, values: Record<string, unknown>): s
 		}
 	}
 	return `%%${parts.join(' ')}%%`;
+}
+
+export const DOCS_URL = 'https://github.com/oto-lab/devuloper-posts/blob/oto-lab/docs/note-commands.md';
+
+export const GROUP_LABELS: Record<CommandDef['group'], string> = {
+	text: 'テキスト',
+	random: 'ランダム',
+	image: '画像を添付',
+	external: '外部から取ってくる',
+};
+
+/**
+ * Shows how to write `def` by hand, for people posting from other clients.
+ *
+ * @example
+ * describeSyntax(choose) // => '%%rand.choose count:… <選択肢 (| 区切り)>%%'
+ */
+export function describeSyntax(def: CommandDef): string {
+	const options = def.fields.filter(field => field.role === 'option').map(field => {
+		if (field.type === 'boolean') return `${field.key}:${field.onValue ?? 'on'}`;
+		if (field.type === 'enum') return `${field.key}:${(field.enum ?? []).map(item => item.value).filter(value => value !== '').join('|')}`;
+		return `${field.key}:…`;
+	});
+	const args = def.fields.filter(field => field.role !== 'option').map(field => `<${field.label}>`);
+	return `%%${[def.name, ...options.map(option => `[${option}]`), ...args].join(' ')}%%`;
 }

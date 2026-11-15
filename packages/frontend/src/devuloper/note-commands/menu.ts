@@ -5,7 +5,7 @@
 
 import { defineAsyncComponent, nextTick } from 'vue';
 import { getSpotifyAuthorizeUrl, getSpotifyStatus, loadPrefs, previewNoteCommands, savePrefs, unlinkSpotify } from './api.js';
-import { COMMANDS, buildSyntax } from './catalog.js';
+import { COMMANDS, GROUP_LABELS, buildSyntax } from './catalog.js';
 import type { MenuItem } from '@/types/menu.js';
 import type { Form, FormItem } from '@/utility/form.js';
 import type { CommandDef, CommandField } from './catalog.js';
@@ -126,6 +126,12 @@ async function openSpotifySettings() {
 	if (!canceled) window.open(url, '_blank', 'noopener');
 }
 
+function openHelp() {
+	const { dispose } = os.popup(defineAsyncComponent(() => import('./NoteCommandHelp.vue')), {}, {
+		closed: () => dispose(),
+	});
+}
+
 /**
  * Opens the fork's command menu for the post form. The chosen command is inserted as `%%…%%` syntax,
  * which the server runs when the note is posted, so the button and third-party clients share one path.
@@ -163,10 +169,11 @@ export function openNoteCommandMenu(anchor: EventTarget | null, textarea: HTMLTe
 		{ type: 'label', text: 'ノート用コマンド' },
 		{ type: 'parent', text: '装飾文字', icon: 'ti ti-typography', children: fonts.map(toItem) },
 		...COMMANDS.filter(def => def.group === 'text' && !def.name.startsWith('font.')).map(toItem),
-		{ type: 'parent', text: 'ランダム', icon: 'ti ti-dice', children: COMMANDS.filter(def => def.group === 'random').map(toItem) },
-		{ type: 'parent', text: '画像を添付', icon: 'ti ti-photo-plus', children: COMMANDS.filter(def => def.group === 'image').map(toItem) },
-		{ type: 'parent', text: '外部から取ってくる', icon: 'ti ti-world-download', children: COMMANDS.filter(def => def.group === 'external').map(toItem) },
+		{ type: 'parent', text: GROUP_LABELS.random, icon: 'ti ti-dice', children: COMMANDS.filter(def => def.group === 'random').map(toItem) },
+		{ type: 'parent', text: GROUP_LABELS.image, icon: 'ti ti-photo-plus', children: COMMANDS.filter(def => def.group === 'image').map(toItem) },
+		{ type: 'parent', text: GROUP_LABELS.external, icon: 'ti ti-world-download', children: COMMANDS.filter(def => def.group === 'external').map(toItem) },
 		{ type: 'divider' },
+		{ text: '使い方', icon: 'ti ti-help-circle', action: openHelp },
 		{ text: '設定', icon: 'ti ti-settings', action: openSettings },
 		{ text: 'Spotify 連携', icon: 'ti ti-brand-spotify', action: openSpotifySettings },
 	], anchor);
