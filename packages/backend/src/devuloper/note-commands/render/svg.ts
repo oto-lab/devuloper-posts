@@ -58,6 +58,35 @@ export function fitText(text: string, fontSize: number, maxWidth: number): strin
 	return `${result}…`;
 }
 
+/**
+ * Breaks `text` into at most `maxLines` lines of estimated width `maxWidth`.
+ * Breaks prefer spaces but fall back to any character, since Japanese has none; the last line gets an ellipsis when cut.
+ */
+export function wrapText(text: string, fontSize: number, maxWidth: number, maxLines: number): string[] {
+	const lines: string[] = [];
+	let rest = text.replace(/\s+/g, ' ').trim();
+	while (rest !== '' && lines.length < maxLines) {
+		if (estimateTextWidth(rest, fontSize) <= maxWidth) {
+			lines.push(rest);
+			rest = '';
+			break;
+		}
+		let cut = 0;
+		let width = 0;
+		for (const char of rest) {
+			width += estimateTextWidth(char, fontSize);
+			if (width > maxWidth) break;
+			cut += char.length;
+		}
+		const space = rest.lastIndexOf(' ', cut);
+		const end = space > cut * 0.6 ? space : cut;
+		lines.push(rest.slice(0, end).trim());
+		rest = rest.slice(end).trim();
+	}
+	if (rest !== '' && lines.length > 0) lines[lines.length - 1] = fitText(`${lines[lines.length - 1]}…`, fontSize, maxWidth);
+	return lines;
+}
+
 export async function svgToPng(svg: string): Promise<Buffer> {
 	return await sharp(Buffer.from(svg)).png().toBuffer();
 }

@@ -32,7 +32,7 @@ export type CommandDef = {
 	name: string;
 	label: string;
 	icon: string;
-	group: 'text' | 'random' | 'image';
+	group: 'text' | 'random' | 'image' | 'external';
 	fields: CommandField[];
 	/** False for commands whose result is decided when the note is posted. */
 	preview: boolean;
@@ -176,6 +176,61 @@ export const COMMANDS: CommandDef[] = [
 			] },
 		],
 	},
+	{
+		name: 'tr',
+		label: '翻訳を付け足す',
+		icon: 'ti ti-language',
+		group: 'external',
+		preview: true,
+		fields: [
+			{ key: 'to', label: '翻訳先の言語', role: 'main', type: 'string', required: true, default: 'en', description: '例: en、ko、en|ko' },
+			{ key: 'content', label: '文章 (空欄ならノート全体)', role: 'text', type: 'string', multiline: true, fromSelection: true },
+		],
+	},
+	{
+		name: 'code',
+		label: 'GitHub のコードを引用',
+		icon: 'ti ti-code',
+		group: 'external',
+		preview: true,
+		fields: [
+			{ key: 'source', label: 'ファイルの URL', role: 'main', type: 'string', required: true, description: '例: https://github.com/owner/repo/blob/main/src/a.ts#L10-L20、または owner/repo src/a.ts' },
+			{ key: 'lines', label: '行 (開始|終了)', role: 'option', type: 'string' },
+			{ key: 'ref', label: 'ブランチやコミット (短い書き方のとき)', role: 'option', type: 'string' },
+			{ key: 'img', label: 'ハイライト付きの画像も添付する', role: 'option', type: 'boolean', default: false },
+		],
+	},
+	{
+		name: 'contrib',
+		label: 'GitHub のコントリビューション',
+		icon: 'ti ti-brand-github',
+		group: 'external',
+		preview: true,
+		fields: [
+			{ key: 'user', label: 'GitHub のユーザー名 (空欄なら設定の値)', role: 'main', type: 'string' },
+			{ key: 'weeks', label: '週数', role: 'option', type: 'string', default: '53' },
+		],
+	},
+	...([
+		['card', 'URL からカード', 'URL'],
+		['card.gh', 'GitHub', 'owner/repo、owner/repo#12、owner/repo@コミット、ユーザー名、または URL'],
+		['card.npm', 'npm', 'パッケージ名'],
+		['card.pypi', 'PyPI', 'パッケージ名'],
+		['card.crates', 'crates.io', 'クレート名'],
+		['card.docker', 'Docker Hub', 'イメージ名 (例: library/redis)'],
+	] as const).map(([name, label, description]): CommandDef => ({
+		name,
+		label: `カード: ${label}`,
+		icon: 'ti ti-id',
+		group: 'external',
+		preview: true,
+		fields: [
+			{ key: 'target', label: '対象', role: 'main', type: 'string', required: true, description },
+			{ key: 'style', label: '画像', role: 'option', type: 'enum', default: '', enum: [
+				{ label: '自動', value: '' }, { label: 'サイトのプレビュー画像 (ogp)', value: 'ogp' }, { label: 'カードを作る (card)', value: 'card' },
+			] },
+		],
+	})),
 	{
 		name: 'rand.dice',
 		label: 'サイコロ',

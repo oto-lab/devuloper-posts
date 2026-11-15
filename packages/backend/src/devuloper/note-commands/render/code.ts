@@ -59,7 +59,7 @@ function truncateLine(tokens: { content: string; color?: string }[]): { content:
  * Renders highlighted code as SVG pages of up to LINES_PER_IMAGE lines each.
  * Unknown languages are drawn without highlighting.
  */
-export async function renderCodeSvgs(code: string, language: string | null, theme: CodeTheme): Promise<string[]> {
+export async function renderCodeSvgs(code: string, language: string | null, theme: CodeTheme, firstLineNumber = 1): Promise<string[]> {
 	const highlighter = await getHighlighter();
 	const lang = resolveLanguage(language);
 	if (lang != null) await highlighter.loadLanguage(lang);
@@ -68,7 +68,7 @@ export async function renderCodeSvgs(code: string, language: string | null, them
 	const pages: string[] = [];
 	for (let start = 0; start < tokens.length; start += LINES_PER_IMAGE) {
 		const lines = tokens.slice(start, start + LINES_PER_IMAGE).map(truncateLine);
-		const gutter = String(start + lines.length).length + 2;
+		const gutter = String(firstLineNumber + start + lines.length - 1).length + 2;
 		const columns = Math.max(20, ...lines.map(line => columnWidth(line.map(token => token.content).join(''))));
 		const width = Math.ceil(PADDING * 2 + (gutter + columns) * CHAR_WIDTH);
 		const height = PADDING * 2 + lines.length * LINE_HEIGHT;
@@ -77,7 +77,7 @@ export async function renderCodeSvgs(code: string, language: string | null, them
 
 		const body = lines.map((line, i) => {
 			const y = PADDING + (i + 0.75) * LINE_HEIGHT;
-			const number = `<text x="${PADDING + (gutter - 2) * CHAR_WIDTH}" y="${y}" text-anchor="end" fill="${foreground}" fill-opacity="0.4">${start + i + 1}</text>`;
+			const number = `<text x="${PADDING + (gutter - 2) * CHAR_WIDTH}" y="${y}" text-anchor="end" fill="${foreground}" fill-opacity="0.4">${firstLineNumber + start + i}</text>`;
 			const spans = line.map(token => `<tspan fill="${token.color ?? foreground}">${escapeXml(token.content)}</tspan>`).join('');
 			return `${number}<text x="${PADDING + gutter * CHAR_WIDTH}" y="${y}" xml:space="preserve">${spans}</text>`;
 		}).join('');

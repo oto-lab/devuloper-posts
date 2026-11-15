@@ -144,6 +144,7 @@ export function openNoteCommandMenu(anchor: EventTarget | null, textarea: HTMLTe
 		...COMMANDS.filter(def => def.group === 'text' && !def.name.startsWith('font.')).map(toItem),
 		{ type: 'parent', text: 'ランダム', icon: 'ti ti-dice', children: COMMANDS.filter(def => def.group === 'random').map(toItem) },
 		{ type: 'parent', text: '画像を添付', icon: 'ti ti-photo-plus', children: COMMANDS.filter(def => def.group === 'image').map(toItem) },
+		{ type: 'parent', text: '外部から取ってくる', icon: 'ti ti-world-download', children: COMMANDS.filter(def => def.group === 'external').map(toItem) },
 		{ type: 'divider' },
 		{ text: '設定', icon: 'ti ti-settings', action: openSettings },
 	], anchor);
