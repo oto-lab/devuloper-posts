@@ -4,9 +4,13 @@
  */
 
 import { promises as fs } from 'node:fs';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DB_MAX_IMAGE_COMMENT_LENGTH, MAX_NOTE_TEXT_LENGTH } from '@/const.js';
+import type { Config } from '@/config.js';
 import { DriveService } from '@/core/DriveService.js';
+import { IdService } from '@/core/IdService.js';
+import { DI } from '@/di-symbols.js';
+import type { NoteReactionsRepository, NotesRepository } from '@/models/_.js';
 import { RegistryApiService } from '@/core/RegistryApiService.js';
 import { bindThis } from '@/decorators.js';
 import { createTemp } from '@/misc/create-temp.js';
@@ -81,7 +85,17 @@ function toInput(spec: NoteCommandSpec, body: string): NoteCommandInput {
 @Injectable()
 export class NoteCommandService {
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
+		@Inject(DI.notesRepository)
+		private notesRepository: NotesRepository,
+
+		@Inject(DI.noteReactionsRepository)
+		private noteReactionsRepository: NoteReactionsRepository,
+
 		private driveService: DriveService,
+		private idService: IdService,
 		private registryApiService: RegistryApiService,
 	) {
 	}
@@ -104,6 +118,12 @@ export class NoteCommandService {
 			user,
 			prefs: readPrefs((await this.registryApiService.getItem(user.id, null, PREFS_SCOPE, PREFS_KEY))?.value),
 			now: new Date(),
+			services: {
+				config: this.config,
+				idService: this.idService,
+				notesRepository: this.notesRepository,
+				noteReactionsRepository: this.noteReactionsRepository,
+			},
 		};
 
 		let expanded = '';

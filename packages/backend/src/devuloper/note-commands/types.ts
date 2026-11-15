@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import type { Config } from '@/config.js';
+import type { IdService } from '@/core/IdService.js';
+import type { NoteReactionsRepository, NotesRepository } from '@/models/_.js';
 import type { NoteCommandPrefs } from './prefs.js';
 
 /** A user-facing failure; the message is shown to the poster as is. */
@@ -29,10 +32,18 @@ export type NoteCommandInput = {
 	text: string;
 };
 
+export type NoteCommandServices = {
+	config: Config;
+	idService: IdService;
+	notesRepository: NotesRepository;
+	noteReactionsRepository: NoteReactionsRepository;
+};
+
 export type NoteCommandContext = {
 	user: { id: string; username: string; host: string | null };
 	prefs: NoteCommandPrefs;
 	now: Date;
+	services: NoteCommandServices;
 };
 
 export type NoteCommandSpec = {
